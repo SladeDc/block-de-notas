@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bloc de Notas Virtual</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: all 0.3s ease;
+        }
+        body {
+            background: linear-gradient(135deg, #f5f7fa, #e9ecef);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeIn 1s ease;
+        }
+        h1 {
+            color: #32325d;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+            text-shadow: 0px 1px 2px rgba(0,0,0,0.1);
+        }
+        .subtitle {
+            color: #6b7c93;
+            font-size: 1rem;
+        }
+        .notes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            padding: 15px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+        .control-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #5469d4;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.3s;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(50, 50, 93, 0.1);
+        }
+        button:hover {
+            background-color: #4a5fcf;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(50, 50, 93, 0.2);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .delete-all {
+            background-color: #f56565;
+        }
+        .delete-all:hover {
+            background-color: #e53e3e;
+        }
+        .export-btn {
+            background-color: #38b2ac;
+        }
+        .export-btn:hover {
+            background-color: #319795;
+        }
+        .category-btn {
+            background-color: #9F7AEA;
+        }
+        .category-btn:hover {
+            background-color: #805AD5;
+        }
+        .note {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            position: relative;
+            transition: all 0.3s ease;
+            animation: noteAppear 0.5s ease;
+        }
+        .note:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+        }
+        .note-color {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 10px;
+            width: 100%;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+        .note-title {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+        .note-title:focus {
+            outline: none;
+            border-color: #5469d4;
+            box-shadow: 0 0 0 3px rgba(84, 105, 212, 0.25);
+        }
+        .note-content {
+            width: 100%;
+            min-height: 150px;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            resize: vertical;
+            font-size: 14px;
+        }
+        .note-content:focus {
+            outline: none;
+            border-color: #5469d4;
+            box-shadow: 0 0 0 3px rgba(84, 105, 212, 0.25);
+        }
+        .note-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            color: #a0aec0;
+            font-size: 12px;
+        }
+        .note-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .color-picker {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .color-option {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s ease;
+        }
+        .color-option:hover {
+            transform: scale(1.2);
+        }
+        .color-option.active {
+            border-color: #32325d;
+        }
+        .delete-btn {
+            background-color: #f56565;
+        }
+        .delete-btn:hover {
+            background-color: #e53e3e;
+        }
+        .search-input {
+            flex-grow: 1;
+            padding: 10px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #5469d4;
+            box-shadow: 0 0 0 3px rgba(84, 105, 212, 0.25);
+        }
+        .category-select {
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .category-select:focus {
+            outline: none;
+            border-color: #5469d4;
+            box-shadow: 0 0 0 3px rgba(84, 105, 212, 0.25);
+        }
+        .category-tag {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: white;
+            margin-right: 5px;
+            display: inline-block;
+        }
+        .empty-state {
+            text-align: center;
+            color: #718096;
+            padding: 40px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+            animation: fadeIn 1s ease;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #a0aec0;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 {
+            color: #32325d;
+            margin: 0;
+        }
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #718096;
+        }
+        .sorting-options {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .sort-select {
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .filter-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-left: auto;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .tooltip-text {
+            visibility: hidden;
+            width: 120px;
+            background-color: #32325d;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            transform: translateY(10px);
+            font-size: 12px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #32325d transparent transparent transparent;
+        }
+        @keyframes noteAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        .pulse-animation {
+            animation: pulse 1s ease;
+        }
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+            .search-input, .control-group {
+                width: 100%;
+            }
+            .notes-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-sticky-note"></i> Bloc de Notas Virtual</h1>
+            <p class="subtitle">Organiza tus ideas de manera simple y elegante</p>
+        </header>
+        
+        <div class="controls">
+            <input type="text" id="search" class="search-input" placeholder="Buscar notas...">
+            
+            <div class="filter-section">
+                <select id="category-filter" class="category-select">
+                    <option value="all">Todas las categorías</option>
+                    <option value="trabajo">Trabajo</option>
+                    <option value="personal">Personal</option>
+                    <option value="ideas">Ideas</option>
+                    <option value="tareas">Tareas</option>
+                </select>
+                
+                <div class="sorting-options">
+                    <select id="sort-by" class="sort-select">
+                        <option value="date-desc">Más recientes</option>
+                        <option value="date-asc">Más antiguas</option>
+                        <option value="title">Por título</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <button id="new-note" class="tooltip">
+                    <i class="fas fa-plus"></i> Nueva Nota
+                    <span class="tooltip-text">Crear nota nueva</span>
+                </button>
+                <button id="manage-categories" class="category-btn tooltip">
+                    <i class="fas fa-tags"></i> Categorías
+                    <span class="tooltip-text">Administrar categorías</span>
+                </button>
+                <button id="export-notes" class="export-btn tooltip">
+                    <i class="fas fa-file-export"></i> Exportar
+                    <span class="tooltip-text">Exportar notas</span>
+                </button>
+                <button id="delete-all" class="delete-all tooltip">
+                    <i class="fas fa-trash-alt"></i> Eliminar Todo
+                    <span class="tooltip-text">Eliminar todas las notas</span>
+                </button>
+            </div>
+        </div>
+        
+        <div id="notes-container" class="notes-container">
+            <!-- Las notas se generarán aquí -->
+        </div>
+    </div>
+    
+    <!-- Modal para administrar categorías -->
+    <div id="categories-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Administrar Categorías</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div>
+                <input type="text" id="new-category" class="search-input" placeholder="Nueva categoría...">
+                <button id="add-category" style="margin-top: 10px;">
+                    <i class="fas fa-plus"></i> Añadir Categoría
+                </button>
+                <div id="categories-list" style="margin-top: 20px;">
+                    <!-- Lista de categorías -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos del DOM
+            const notesContainer = document.getElementById('notes-container');
+            const newNoteBtn = document.getElementById('new-note');
+            const deleteAllBtn = document.getElementById('delete-all');
+            const exportBtn = document.getElementById('export-notes');
+            const searchInput = document.getElementById('search');
+            const categoryFilterSelect = document.getElementById('category-filter');
+            const sortBySelect = document.getElementById('sort-by');
+            const manageCategoriesBtn = document.getElementById('manage-categories');
+            const categoriesModal = document.getElementById('categories-modal');
+            const closeModalBtn = document.querySelector('.close-modal');
+            const newCategoryInput = document.getElementById('new-category');
+            const addCategoryBtn = document.getElementById('add-category');
+            const categoriesList = document.getElementById('categories-list');
+            
+            // Colores disponibles para las notas
+            const colors = [
+                {id: 'default', hex: '#5469d4'},
+                {id: 'red', hex: '#f56565'},
+                {id: 'orange', hex: '#ed8936'},
+                {id: 'yellow', hex: '#ecc94b'},
+                {id: 'green', hex: '#48bb78'},
+                {id: 'teal', hex: '#38b2ac'},
+                {id: 'blue', hex: '#4299e1'},
+                {id: 'indigo', hex: '#667eea'},
+                {id: 'purple', hex: '#9f7aea'},
+                {id: 'pink', hex: '#ed64a6'}
+            ];
+            
+            // Categorías predeterminadas
+            const defaultCategories = ['Trabajo', 'Personal', 'Ideas', 'Tareas'];
+            
+            // Cargar notas guardadas
+            let notes = JSON.parse(localStorage.getItem('notes')) || [];
+            
+            // Cargar categorías guardadas
+            let categories = JSON.parse(localStorage.getItem('categories')) || defaultCategories;
+            
+            // Inicializar categorías si es necesario
+            if (!localStorage.getItem('categories')) {
+                localStorage.setItem('categories', JSON.stringify(categories));
+            }
+            
+            // Renderizar todas las notas
+            renderNotes();
+            updateCategoryFilter();
+            
+            // Evento para crear nueva nota
+            newNoteBtn.addEventListener('click', function() {
+                createNewNote();
+                newNoteBtn.classList.add('pulse-animation');
+                setTimeout(() => {
+                    newNoteBtn.classList.remove('pulse-animation');
+                }, 1000);
+            });
+            
+            // Evento para eliminar todas las notas
+            deleteAllBtn.addEventListener('click', function() {
+                if (confirm('¿Estás seguro de que quieres eliminar todas las notas?')) {
+                    notes = [];
+                    saveNotes();
+                    renderNotes();
+                }
+            });
+            
+            // Evento para exportar notas
+            exportBtn.addEventListener('click', exportNotes);
+            
+            // Evento para buscar notas
+            searchInput.addEventListener('input', function() {
+                renderNotes();
+            });
+            
+            // Eventos para filtrar y ordenar
+            categoryFilterSelect.addEventListener('change', renderNotes);
+            sortBySelect.addEventListener('change', renderNotes);
+            
+            // Eventos para el modal de categorías
+            manageCategoriesBtn.addEventListener('click', function() {
+                openCategoriesModal();
+            });
+            
+            closeModalBtn.addEventListener('click', function() {
+                closeCategoriesModal();
+            });
+            
+            window.addEventListener('click', function(e) {
+                if (e.target === categoriesModal) {
+                    closeCategoriesModal();
+                }
+            });
+            
+            addCategoryBtn.addEventListener('click', addNewCategory);
+            
+            // Función para abrir el modal de categorías
+            function openCategoriesModal() {
+                categoriesModal.classList.add('active');
+                renderCategoriesList();
+            }
+            
+            // Función para cerrar el modal de categorías
+            function closeCategoriesModal() {
+                categoriesModal.classList.remove('active');
+            }
+            
+            // Función para renderizar la lista de categorías
+            function renderCategoriesList() {
+                categoriesList.innerHTML = '';
+                
+                categories.forEach((category, index) => {
+                    const categoryItem = document.createElement('div');
+                    categoryItem.style.display = 'flex';
+                    categoryItem.style.justifyContent = 'space-between';
+                    categoryItem.style.alignItems = 'center';
+                    categoryItem.style.padding = '10px';
+                    categoryItem.style.marginBottom = '5px';
+                    categoryItem.style.backgroundColor = '#f7fafc';
+                    categoryItem.style.borderRadius = '4px';
+                    
+                    categoryItem.innerHTML = `
+                        <span>${category}</span>
+                        <button class="delete-category" data-index="${index}" style="padding: 5px 10px; background-color: #f56565;">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    `;
+                    
+                    categoriesList.appendChild(categoryItem);
+                });
+                
+                // Asignar eventos a los botones de eliminar categoría
+                document.querySelectorAll('.delete-category').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = parseInt(this.dataset.index);
+                        deleteCategory(index);
+                    });
+                });
+            }
+            
+            // Función para añadir nueva categoría
+            function addNewCategory() {
+                const newCategory = newCategoryInput.value.trim();
+                
+                if (newCategory && !categories.includes(newCategory)) {
+                    categories.push(newCategory);
+                    saveCategories();
+                    renderCategoriesList();
+                    updateCategoryFilter();
+                    newCategoryInput.value = '';
+                }
+            }
+            
+            // Función para eliminar categoría
+            function deleteCategory(index) {
+                if (index >= 0 && index < categories.length) {
+                    const categoryToDelete = categories[index];
+                    
+                    // Actualizar notas que usan esta categoría
+                    notes.forEach(note => {
+                        if (note.category === categoryToDelete) {
+                            note.category = '';
+                        }
+                    });
+                    
+                    categories.splice(index, 1);
+                    saveCategories();
+                    saveNotes();
+                    renderCategoriesList();
+                    updateCategoryFilter();
+                    renderNotes();
+                }
+            }
+            
+            // Función para guardar categorías
+            function saveCategories() {
+                localStorage.setItem('categories', JSON.stringify(categories));
+            }
+            
+            // Función para actualizar el filtro de categorías
+            function updateCategoryFilter() {
+                categoryFilterSelect.innerHTML = '<option value="all">Todas las categorías</option>';
+                
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.toLowerCase();
+                    option.textContent = category;
+                    categoryFilterSelect.appendChild(option);
+                });
+            }
+            
+            // Función para crear una nueva nota
+            function createNewNote() {
+                const newNote = {
+                    id: Date.now(),
+                    title: '',
+                    content: '',
+                    color: 'default',
+                    category: '',
+                    lastEdited: new Date().toLocaleString()
+                };
+                
+                notes.unshift(newNote);
+                saveNotes();
+                renderNotes();
+            }
+            
+            // Función para guardar notas en localStorage
+            function saveNotes() {
+                localStorage.setItem('notes', JSON.stringify(notes));
+            }
+            
+            // Función para renderizar notas
+            function renderNotes() {
+                notesContainer.innerHTML = '';
+                
+                // Filtrar por búsqueda
+                const searchTerm = searchInput.value.toLowerCase();
+                const categoryFilter = categoryFilterSelect.value;
+                
+                let filteredNotes = notes.filter(note => {
+                    const matchesSearch = note.title.toLowerCase().includes(searchTerm) || 
+                                       note.content.toLowerCase().includes(searchTerm);
+                    
+                    const matchesCategory = categoryFilter === 'all' || 
+                                         (note.category && note.category.toLowerCase() === categoryFilter);
+                    
+                    return matchesSearch && matchesCategory;
+                });
+                
+                // Ordenar notas
+                const sortBy = sortBySelect.value;
+                
+                switch(sortBy) {
+                    case 'date-desc':
+                        filteredNotes.sort((a, b) => new Date(b.lastEdited) - new Date(a.lastEdited));
+                        break;
+                    case 'date-asc':
+                        filteredNotes.sort((a, b) => new Date(a.lastEdited) - new Date(b.lastEdited));
+                        break;
+                    case 'title':
+                        filteredNotes.sort((a, b) => a.title.localeCompare(b.title));
+                        break;
+                }
+                
+                // Mostrar estado vacío si no hay notas
+                if (filteredNotes.length === 0) {
+                    notesContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i class="far fa-sticky-note"></i>
+                            <p>${searchTerm || categoryFilter !== 'all' ? 
+                                'No se encontraron notas que coincidan con tu búsqueda.' : 
+                                'No hay notas. ¡Crea una nueva nota haciendo clic en "Nueva Nota"!'}
+                            </p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Crear elementos para cada nota
+                filteredNotes.forEach((note, index) => {
+                    const noteElement = document.createElement('div');
+                    noteElement.classList.add('note');
+                    noteElement.dataset.id = note.id;
+                    noteElement.style.animationDelay = `${index * 0.05}s`;
+                    
+                    // Obtener el color de la nota
+                    const noteColor = colors.find(c => c.id === note.color) || colors[0];
+                    
+                    noteElement.innerHTML = `
+                        <div class="note-color" style="background-color: ${noteColor.hex};"></div>
+                        <input type="text" class="note-title" placeholder="Título" value="${note.title || ''}">
+                        <textarea class="note-content" placeholder="Escribe tu nota aquí...">${note.content || ''}</textarea>
+                        
+                        <div class="color-picker">
+                            ${colors.map(color => `
+                                <div class="color-option ${note.color === color.id ? 'active' : ''}" 
+                                     data-color="${color.id}" 
+                                     style="background-color: ${color.hex};"
+                                     title="${color.id}">
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div style="margin-top: 10px;">
+                            <select class="category-select note-category">
+                                <option value="">Sin categoría</option>
+                                ${categories.map(category => `
+                                    <option value="${category}" ${note.category === category ? 'selected' : ''}>
+                                        ${category}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="note-footer">
+                            <span>Última edición: ${note.lastEdited}</span>
+                        </div>
+                        <div class="note-options">
+                            <button class="delete-btn"><i class="fas fa-trash-alt"></i> Eliminar</button>
+                        </div>
+                    `;
+                    
+                    notesContainer.appendChild(noteElement);
+                    
+                    // Eventos para actualizar la nota
+                    const titleInput = noteElement.querySelector('.note-title');
+                    const contentTextarea = noteElement.querySelector('.note-content');
+                    const deleteBtn = noteElement.querySelector('.delete-btn');
+                    const categorySelect = noteElement.querySelector('.note-category');
+                    const colorOptions = noteElement.querySelectorAll('.color-option');
+                    
+                    titleInput.addEventListener('input', function() {
+                        updateNote(note.id, { title: this.value });
+                    });
+                    
+                    contentTextarea.addEventListener('input', function() {
+                        updateNote(note.id, { content: this.value });
+                    });
+                    
+                    categorySelect.addEventListener('change', function() {
+                        updateNote(note.id, { category: this.value });
+                    });
+                    
+                    deleteBtn.addEventListener('click', function() {
+                        deleteNote(note.id);
+                    });
+                    
+                    // Eventos para el selector de color
+                    colorOptions.forEach(option => {
+                        option.addEventListener('click', function() {
+                            const color = this.dataset.color;
+                            // Actualizar la UI
+                            colorOptions.forEach(op => op.classList.remove('active'));
+                            this.classList.add('active');
+                            // Actualizar el color de la banda superior
+                            const noteColorEl = noteElement.querySelector('.note-color');
+                            const selectedColor = colors.find(c => c.id === color);
+                            noteColorEl.style.backgroundColor = selectedColor.hex;
+                            // Guardar el cambio
+                            updateNote(note.id, { color: color });
+                        });
+                    });
+                });
+            }
+            
+            // Función para actualizar una nota
+            function updateNote(id, updates) {
+                const noteIndex = notes.findIndex(note => note.id === id);
+                
+                if (noteIndex !== -1) {
+                    notes[noteIndex] = {
+                        ...notes[noteIndex],
+                        ...updates,
+                        lastEdited: new Date().toLocaleString()
+                    };
+                    
+                    saveNotes();
+                }
+            }
+            
+            // Función para eliminar una nota
+            function deleteNote(id) {
+                if (confirm('¿Estás seguro de que quieres eliminar esta nota?')) {
+                    notes = notes.filter(note => note.id !== id);
+                    saveNotes();
+                    renderNotes();
+                }
+            }
+            
+            // Función para exportar notas
+            function exportNotes() {
+                let notesText = "MIS NOTAS\n\n";
+                
+                // Agrupar por categoría
+                const notesByCategory = {};
+                
+                notes.forEach(note => {
+                    const category = note.category || 'Sin categoría';
+                    if (!notesByCategory[category]) {
+                        notesByCategory[category] = [];
+                    }
+                    notesByCategory[category].push(note);
+                });
+                
+                // Generar el texto de exportación
+                for (const category in notesByCategory) {
+                    notesText += `= ${category.toUpperCase()} =\n\n`;
+                    
+                    notesByCategory[category].forEach(note => {
+                        notesText += `Título: ${note.title || '(Sin título)'}\n\n`;
+                        notesText += `${note.content || '(Sin contenido)'}\n\n`;
+                        notesText += `Última edición: ${note.lastEdited}\n\n`;
+                        notesText += `-----------------------------------\n\n`;
+                    });
+                }
+                
+                const blob = new Blob([notesText], { type: 'text/plain' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'mis_notas.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                // Mostrar animación al exportar
+                exportBtn.classList.add('pulse-animation');
+                setTimeout(() => {
+                    exportBtn.classList.remove('pulse-animation');
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>
